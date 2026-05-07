@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHC FIP Analysis Dashboard — Kaduna State</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary:   #1F4E79;
+    --accent:    #2E75B6;
+    --green:     #70AD47;
+    --orange:    #ED7D31;
+    --red:       #C00000;
+    --purple:    #7030A0;
+    --teal:      #00B0F0;
+    --light-bg:  #F4F7FB;
+    --card-bg:   #FFFFFF;
+    --border:    #D9E4F0;
+    --text:      #1A1A2E;
+    --subtext:   #5A6A7A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--light-bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    color: white;
+    padding: 28px 40px 22px;
+  }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: 0.3px; }
+  .header p  { font-size: 13px; opacity: 0.85; margin-top: 5px; }
+  .header-meta {
+    display: flex; gap: 24px; margin-top: 12px;
+    font-size: 12px; opacity: 0.75;
+  }
+  .header-meta span { display: flex; align-items: center; gap: 5px; }
+
+  /* Layout */
+  .main { padding: 28px 40px; max-width: 1400px; margin: 0 auto; }
+
+  /* Section headings */
+  .section-title {
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--accent);
+    border-left: 4px solid var(--accent);
+    padding-left: 10px; margin: 32px 0 16px;
+  }
+
+  /* KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .kpi-card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 18px 16px 14px;
+    border-top: 4px solid var(--accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .kpi-card.c1 { border-top-color: var(--primary); }
+  .kpi-card.c2 { border-top-color: var(--green); }
+  .kpi-card.c3 { border-top-color: var(--red); }
+  .kpi-card.c4 { border-top-color: var(--orange); }
+  .kpi-card.c5 { border-top-color: var(--purple); }
+  .kpi-card.c6 { border-top-color: var(--teal); }
+  .kpi-label { font-size: 11px; color: var(--subtext); font-weight: 600;
+                text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-value { font-size: 30px; font-weight: 800; margin: 6px 0 4px;
+                color: var(--primary); line-height: 1; }
+  .kpi-card.c2 .kpi-value { color: var(--green); }
+  .kpi-card.c3 .kpi-value { color: var(--red); }
+  .kpi-card.c4 .kpi-value { color: var(--orange); }
+  .kpi-card.c5 .kpi-value { color: var(--purple); }
+  .kpi-card.c6 .kpi-value { color: var(--teal); }
+  .kpi-sub  { font-size: 11px; color: var(--subtext); }
+
+  /* Chart cards */
+  .chart-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .chart-grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+  .chart-card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid var(--border);
+  }
+  .chart-card h3 {
+    font-size: 13px; font-weight: 700; color: var(--primary);
+    margin-bottom: 4px;
+  }
+  .chart-card p {
+    font-size: 11px; color: var(--subtext); margin-bottom: 16px;
+  }
+  .chart-wrapper { position: relative; }
+
+  /* Tables */
+  .table-card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid var(--border);
+  }
+  .table-card h3 {
+    font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 4px;
+  }
+  .table-card p { font-size: 11px; color: var(--subtext); margin-bottom: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th {
+    background: var(--primary); color: white;
+    padding: 9px 12px; text-align: left; font-weight: 600;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  td { padding: 8px 12px; border-bottom: 1px solid #EEF2F8; }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) { background: #F8FAFD; }
+  .badge {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 12px; font-size: 10px; font-weight: 700;
+  }
+  .badge-green  { background: #E8F5E0; color: #2E7D32; }
+  .badge-orange { background: #FFF3E0; color: #E65100; }
+  .badge-red    { background: #FFEBEE; color: #C62828; }
+
+  /* Progress bar in table */
+  .prog-wrap { display: flex; align-items: center; gap: 8px; }
+  .prog-bar  { flex: 1; height: 6px; background: #E0E8F0; border-radius: 4px; overflow:hidden; }
+  .prog-fill { height: 100%; border-radius: 4px; }
+  .prog-pct  { font-size: 11px; font-weight: 700; min-width: 36px; text-align:right; }
+
+  /* LGA table alternating */
+  .lga-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 0;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center; padding: 24px; color: var(--subtext);
+    font-size: 11px; margin-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 1100px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .chart-grid-2, .chart-grid-3, .lga-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>PHC Facility Improvement Plan — Analysis Dashboard</h1>
+  <p>Kaduna State &nbsp;|&nbsp; Redesigned Integrated Supportive Supervision (ISS) Programme</p>
+  <div class="header-meta">
+    <span>📅 ISS Rounds: R1 (August – September 2025) &amp; R2 (Follow-up)</span>
+    <span>📍 23 LGAs Covered</span>
+    <span>🏥 PHC Facilities across Kaduna State</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- KPIs -->
+  <div class="section-title">Key Performance Indicators</div>
+  <div class="kpi-grid">
+    <div class="kpi-card c1">
+      <div class="kpi-label">R1 Activities Tracked</div>
+      <div class="kpi-value">1,415</div>
+      <div class="kpi-sub">Matched to R2 facilities</div>
+    </div>
+    <div class="kpi-card c2">
+      <div class="kpi-label">Activities Resolved</div>
+      <div class="kpi-value">924</div>
+      <div class="kpi-sub">Gap no longer in R2</div>
+    </div>
+    <div class="kpi-card c3">
+      <div class="kpi-label">Still Outstanding</div>
+      <div class="kpi-value">491</div>
+      <div class="kpi-sub">Gap persists in R2</div>
+    </div>
+    <div class="kpi-card c4">
+      <div class="kpi-label">Implementation Rate</div>
+      <div class="kpi-value">65.3%</div>
+      <div class="kpi-sub">R1 gaps resolved by R2</div>
+    </div>
+    <div class="kpi-card c5">
+      <div class="kpi-label">R2 Gaps Identified</div>
+      <div class="kpi-value">1,108</div>
+      <div class="kpi-sub">Remaining gaps across LGAs</div>
+    </div>
+    <div class="kpi-card c6">
+      <div class="kpi-label">R2 Interventions</div>
+      <div class="kpi-value">1,083</div>
+      <div class="kpi-sub">Proposed solutions generated</div>
+    </div>
+  </div>
+
+  <!-- Row 2: Domain implementation + R2 gaps donut -->
+  <div class="section-title">R1 → R2 Implementation by Domain</div>
+  <div class="chart-grid-2">
+    <div class="chart-card">
+      <h3>Implementation Rate by Performance Domain</h3>
+      <p>% of R1 gaps no longer present in R2 (resolved)</p>
+      <div class="chart-wrapper"><canvas id="domainImplChart" height="160"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>R2 Remaining Gaps by Domain</h3>
+      <p>Distribution of the 1,108 gaps identified in Round 2</p>
+      <div class="chart-wrapper"><canvas id="r2GapsDomainChart" height="160"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 3: Sub-domain implementation -->
+  <div class="section-title">Implementation Rate by Sub-Domain</div>
+  <div class="chart-grid-3">
+    <div class="chart-card">
+      <h3>Resolved Activities by Sub-Domain (R1 → R2)</h3>
+      <p>Sorted from lowest to highest implementation rate</p>
+      <div class="chart-wrapper"><canvas id="subdomainImplChart" height="280"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>R2 Interventions by Sub-Domain</h3>
+      <p>Count of proposed solutions generated in R2</p>
+      <div class="chart-wrapper"><canvas id="r2IntvChart" height="280"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 4: LGA tables side by side -->
+  <div class="section-title">Implementation Rate by LGA</div>
+  <div class="chart-card" style="margin-bottom:20px">
+    <h3>R1 → R2 Implementation Rate — All 23 LGAs</h3>
+    <p>Percentage of R1 gaps resolved by R2 round, sorted highest to lowest</p>
+    <div class="chart-wrapper"><canvas id="lgaChart" height="130"></canvas></div>
+  </div>
+
+  <!-- Row 5: Top gaps + R2 interventions table -->
+  <div class="section-title">R2 Detailed Breakdown</div>
+  <div class="chart-grid-2">
+    <div class="table-card">
+      <h3>Top 15 Most Frequent Gaps in R2</h3>
+      <p>Gaps appearing most frequently across facilities — all currently outstanding</p>
+      <table>
+        <thead><tr><th>#</th><th>Gap Description</th><th>Facilities</th><th>% of Total</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">1</td>
+            <td>Less than 80% tracer equipment available</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:100%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">139</div>
+              </div>
+            </td>
+            <td>12.5%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">2</td>
+            <td>No functional toilets available</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:57%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">79</div>
+              </div>
+            </td>
+            <td>7.1%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">3</td>
+            <td>No water supply in the PHC</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:55%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">76</div>
+              </div>
+            </td>
+            <td>6.9%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">4</td>
+            <td>No required number of rooms</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:53%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">73</div>
+              </div>
+            </td>
+            <td>6.6%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">5</td>
+            <td>No staff with updated clinical trainings</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:49%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">68</div>
+              </div>
+            </td>
+            <td>6.1%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">6</td>
+            <td>Roof, floor and wall not intact</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:47%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">65</div>
+              </div>
+            </td>
+            <td>5.9%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">7</td>
+            <td>Perimeter fence/gate not intact</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:39%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">54</div>
+              </div>
+            </td>
+            <td>4.9%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">8</td>
+            <td>No functional referral protocol</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:34%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">47</div>
+              </div>
+            </td>
+            <td>4.2%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">9</td>
+            <td>No electricity/power source</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:27%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">38</div>
+              </div>
+            </td>
+            <td>3.4%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">10</td>
+            <td>No functional windows/doors</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:25%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">35</div>
+              </div>
+            </td>
+            <td>3.2%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">11</td>
+            <td>No functional cold chain equipment</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:19%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">27</div>
+              </div>
+            </td>
+            <td>2.4%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">12</td>
+            <td>Tracer drug stockout - MMS</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:14%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">20</div>
+              </div>
+            </td>
+            <td>1.8%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">13</td>
+            <td>No required number of Pharmacy tech</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:12%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">17</div>
+              </div>
+            </td>
+            <td>1.5%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">14</td>
+            <td>No required number of SBAs</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:12%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">16</div>
+              </div>
+            </td>
+            <td>1.4%</td>
+          </tr>
+          <tr>
+            <td style="color:var(--subtext);font-weight:700">15</td>
+            <td>No required number of nurses/midwives</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:10%;background:var(--accent)"></div></div>
+                <div class="prog-pct" style="color:var(--accent)">14</div>
+              </div>
+            </td>
+            <td>1.3%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-card">
+      <h3>R2 Interventions by Sub-Domain</h3>
+      <p>Proposed solutions generated across 8 key sub-domains</p>
+      <table>
+        <thead><tr><th>Sub-Domain</th><th>Interventions</th><th>% of Total</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Infrastructure</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:100%;background:var(--purple)"></div></div>
+                <div class="prog-pct" style="color:var(--purple)">528</div>
+              </div>
+            </td>
+            <td>48.8%</td>
+          </tr>
+          <tr>
+            <td>Equipment Availability</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:39%;background:var(--purple)"></div></div>
+                <div class="prog-pct" style="color:var(--purple)">208</div>
+              </div>
+            </td>
+            <td>19.2%</td>
+          </tr>
+          <tr>
+            <td>Health Workforce</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:31%;background:var(--purple)"></div></div>
+                <div class="prog-pct" style="color:var(--purple)">166</div>
+              </div>
+            </td>
+            <td>15.3%</td>
+          </tr>
+          <tr>
+            <td>Clinical Guidelines</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:11%;background:var(--purple)"></div></div>
+                <div class="prog-pct" style="color:var(--purple)">58</div>
+              </div>
+            </td>
+            <td>5.4%</td>
+          </tr>
+          <tr>
+            <td>Medicines & Supplies</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:9%;background:var(--purple)"></div></div>
+                <div class="prog-pct" style="color:var(--purple)">49</div>
+              </div>
+            </td>
+            <td>4.5%</td>
+          </tr>
+          <tr>
+            <td>Data Management & Records</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:1%;background:var(--purple)"></div></div>
+                <div class="prog-pct" style="color:var(--purple)">7</div>
+              </div>
+            </td>
+            <td>0.6%</td>
+          </tr>
+          <tr>
+            <td>Financing</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:0%;background:var(--purple)"></div></div>
+                <div class="prog-pct" style="color:var(--purple)">0</div>
+              </div>
+            </td>
+            <td>0.0%</td>
+          </tr>
+          <tr>
+            <td>Governance & Community Engagement</td>
+            <td>
+              <div class="prog-wrap">
+                <div class="prog-bar"><div class="prog-fill" style="width:0%;background:var(--purple)"></div></div>
+                <div class="prog-pct" style="color:var(--purple)">0</div>
+              </div>
+            </td>
+            <td>0.0%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Row 6: LGA detail table -->
+  <div class="section-title">LGA Performance Detail</div>
+  <div class="table-card">
+    <h3>Implementation Rate by LGA — Full Breakdown</h3>
+    <p>R1 activities tracked per LGA and how many have been resolved by R2</p>
+    <table>
+      <thead>
+        <tr>
+          <th>LGA</th>
+          <th>R1 Activities</th>
+          <th>Resolved</th>
+          <th>Outstanding</th>
+          <th>Implementation Rate</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600">Igabi</td>
+          <td>15</td>
+          <td style="color:var(--green);font-weight:600">13</td>
+          <td style="color:var(--red)">2</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:86.7%;background:#70AD47"></div></div>
+              <div class="prog-pct" style="color:#70AD47">86.7%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-green">Strong</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">MAKARFI</td>
+          <td>88</td>
+          <td style="color:var(--green);font-weight:600">69</td>
+          <td style="color:var(--red)">19</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:78.4%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">78.4%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">KUBAU</td>
+          <td>77</td>
+          <td style="color:var(--green);font-weight:600">59</td>
+          <td style="color:var(--red)">18</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:76.6%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">76.6%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">KACHIA</td>
+          <td>81</td>
+          <td style="color:var(--green);font-weight:600">60</td>
+          <td style="color:var(--red)">21</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:74.1%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">74.1%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">IKARA</td>
+          <td>130</td>
+          <td style="color:var(--green);font-weight:600">96</td>
+          <td style="color:var(--red)">34</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:73.8%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">73.8%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">BIRNIN GWARI</td>
+          <td>97</td>
+          <td style="color:var(--green);font-weight:600">71</td>
+          <td style="color:var(--red)">26</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:73.2%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">73.2%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">LERE</td>
+          <td>48</td>
+          <td style="color:var(--green);font-weight:600">35</td>
+          <td style="color:var(--red)">13</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:72.9%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">72.9%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">KUDAN</td>
+          <td>95</td>
+          <td style="color:var(--green);font-weight:600">69</td>
+          <td style="color:var(--red)">26</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:72.6%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">72.6%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">ZANGO KATAF</td>
+          <td>73</td>
+          <td style="color:var(--green);font-weight:600">52</td>
+          <td style="color:var(--red)">21</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:71.2%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">71.2%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">SOBA</td>
+          <td>80</td>
+          <td style="color:var(--green);font-weight:600">54</td>
+          <td style="color:var(--red)">26</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:67.5%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">67.5%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">GIWA</td>
+          <td>91</td>
+          <td style="color:var(--green);font-weight:600">59</td>
+          <td style="color:var(--red)">32</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:64.8%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">64.8%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">KAJURU</td>
+          <td>91</td>
+          <td style="color:var(--green);font-weight:600">59</td>
+          <td style="color:var(--red)">32</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:64.8%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">64.8%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">KAURU</td>
+          <td>67</td>
+          <td style="color:var(--green);font-weight:600">42</td>
+          <td style="color:var(--red)">25</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:62.7%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">62.7%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">KAGARKO</td>
+          <td>40</td>
+          <td style="color:var(--green);font-weight:600">24</td>
+          <td style="color:var(--red)">16</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:60.0%;background:#ED7D31"></div></div>
+              <div class="prog-pct" style="color:#ED7D31">60.0%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-orange">Moderate</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">JEMA</td>
+          <td>44</td>
+          <td style="color:var(--green);font-weight:600">26</td>
+          <td style="color:var(--red)">18</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:59.1%;background:#C00000"></div></div>
+              <div class="prog-pct" style="color:#C00000">59.1%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-red">Needs Attention</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">KAURA</td>
+          <td>41</td>
+          <td style="color:var(--green);font-weight:600">24</td>
+          <td style="color:var(--red)">17</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:58.5%;background:#C00000"></div></div>
+              <div class="prog-pct" style="color:#C00000">58.5%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-red">Needs Attention</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">SABON GARI</td>
+          <td>26</td>
+          <td style="color:var(--green);font-weight:600">14</td>
+          <td style="color:var(--red)">12</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:53.8%;background:#C00000"></div></div>
+              <div class="prog-pct" style="color:#C00000">53.8%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-red">Needs Attention</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">KADUNA SOUTH</td>
+          <td>33</td>
+          <td style="color:var(--green);font-weight:600">17</td>
+          <td style="color:var(--red)">16</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:51.5%;background:#C00000"></div></div>
+              <div class="prog-pct" style="color:#C00000">51.5%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-red">Needs Attention</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">KADUNA NORTH</td>
+          <td>38</td>
+          <td style="color:var(--green);font-weight:600">19</td>
+          <td style="color:var(--red)">19</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:50.0%;background:#C00000"></div></div>
+              <div class="prog-pct" style="color:#C00000">50.0%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-red">Needs Attention</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">SANGA</td>
+          <td>38</td>
+          <td style="color:var(--green);font-weight:600">18</td>
+          <td style="color:var(--red)">20</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:47.4%;background:#C00000"></div></div>
+              <div class="prog-pct" style="color:#C00000">47.4%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-red">Needs Attention</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">CHIKUN</td>
+          <td>47</td>
+          <td style="color:var(--green);font-weight:600">20</td>
+          <td style="color:var(--red)">27</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:42.6%;background:#C00000"></div></div>
+              <div class="prog-pct" style="color:#C00000">42.6%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-red">Needs Attention</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">ZARIA</td>
+          <td>46</td>
+          <td style="color:var(--green);font-weight:600">15</td>
+          <td style="color:var(--red)">31</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:32.6%;background:#C00000"></div></div>
+              <div class="prog-pct" style="color:#C00000">32.6%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-red">Needs Attention</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:600">JABA</td>
+          <td>29</td>
+          <td style="color:var(--green);font-weight:600">9</td>
+          <td style="color:var(--red)">20</td>
+          <td>
+            <div class="prog-wrap">
+              <div class="prog-bar"><div class="prog-fill" style="width:31.0%;background:#C00000"></div></div>
+              <div class="prog-pct" style="color:#C00000">31.0%</div>
+            </div>
+          </td>
+          <td><span class="badge badge-red">Needs Attention</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="footer">
+  PHC FIP Analysis Dashboard &nbsp;|&nbsp; Kaduna State Redesigned ISS Programme &nbsp;|&nbsp;
+  Data: R1 Merged FIPs (Sep 2025) &amp; R2 FIP Tracker &nbsp;|&nbsp;
+  Generated for CHAI Pathways Programme
+</div>
+
+<script>
+Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#5A6A7A';
+
+// 1. Domain implementation — horizontal stacked bar
+new Chart(document.getElementById('domainImplChart'), {
+  type: 'bar',
+  data: {
+    labels: ["Facility Readiness", "Service Provision", "Service Utilization & QoC"],
+    datasets: [
+      { label: 'Resolved', data: [433, 242, 249],
+         backgroundColor: '#70AD47', borderRadius: 4 },
+      { label: 'Outstanding', data: [399, 32, 60],
+         backgroundColor: '#FFDDD5', borderRadius: 4 }
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom' },
+      tooltip: {
+        callbacks: {
+          afterLabel: (ctx) => {
+            const total = ctx.dataset.data.reduce ? null : 0;
+            const pcts = [52.0, 88.3, 80.6];
+            return ctx.datasetIndex === 0 ? `Implementation rate: ${pcts[ctx.dataIndex]}%` : '';
+          }
+        }
+      }
+    },
+    scales: {
+      x: { stacked: true, grid: { color: '#EEF2F8' } },
+      y: { stacked: true, grid: { display: false } }
+    }
+  }
+});
+
+// 2. R2 gaps donut
+new Chart(document.getElementById('r2GapsDomainChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ["Facility Readiness", "Service Provision", "Service Utilization & QoC"],
+    datasets: [{
+      data: [813, 159, 136],
+      backgroundColor: ['#1F4E79', '#2E75B6', '#70AD47'],
+      borderWidth: 2, borderColor: '#fff',
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    responsive: true,
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12 } },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => ` ${ctx.label}: ${ctx.raw} gaps (${Math.round(ctx.raw/1108*100)}%)`
+        }
+      }
+    }
+  }
+});
+
+// 3. Sub-domain implementation horizontal bar (stacked)
+new Chart(document.getElementById('subdomainImplChart'), {
+  type: 'bar',
+  data: {
+    labels: ["Infrastructure", "Health Workforce", "Equipment Availability", "Clinical Guidelines", "Coverage of Key Services", "Medicines & Supplies", "Availability of Key Services", "Data Management & Records", "Quality of Care", "Service Utilization", "Governance & Community Engagement", "Financing"],
+    datasets: [
+      { label: 'Resolved', data: [19, 69, 73, 123, 144, 86, 95, 69, 63, 66, 63, 54],
+         backgroundColor: '#70AD47', borderRadius: 3 },
+      { label: 'Outstanding', data: [169, 110, 97, 37, 39, 19, 11, 4, 3, 2, 0, 0],
+         backgroundColor: '#FFDDD5', borderRadius: 3 }
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom' },
+      tooltip: {
+        callbacks: {
+          afterLabel: (ctx) => {
+            const pcts = [10.1, 38.5, 42.9, 76.9, 78.7, 81.9, 89.6, 94.5, 95.5, 97.1, 100.0, 100.0];
+            return ctx.datasetIndex === 0 ? `Rate: ${pcts[ctx.dataIndex]}%` : '';
+          }
+        }
+      }
+    },
+    scales: {
+      x: { stacked: true, grid: { color: '#EEF2F8' } },
+      y: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+
+// 4. R2 interventions horizontal bar
+new Chart(document.getElementById('r2IntvChart'), {
+  type: 'bar',
+  data: {
+    labels: ["Infrastructure", "Equipment Availability", "Health Workforce", "Clinical Guidelines", "Medicines & Supplies", "Data Management & Records", "Financing", "Governance & Community Engagement"],
+    datasets: [{
+      label: 'Interventions',
+      data: [528, 208, 166, 58, 49, 7, 0, 0],
+      backgroundColor: [
+        '#7030A0','#1F4E79','#2E75B6','#ED7D31',
+        '#70AD47','#00B0F0','#C00000','#FFC000'
+      ],
+      borderRadius: 4
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#EEF2F8' } },
+      y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+
+// 5. LGA bar chart
+new Chart(document.getElementById('lgaChart'), {
+  type: 'bar',
+  data: {
+    labels: ["Igabi", "MAKARFI", "KUBAU", "KACHIA", "IKARA", "BIRNIN GWARI", "LERE", "KUDAN", "ZANGO KATAF", "SOBA", "GIWA", "KAJURU", "KAURU", "KAGARKO", "JEMA", "KAURA", "SABON GARI", "KADUNA SOUTH", "KADUNA NORTH", "SANGA", "CHIKUN", "ZARIA", "JABA"],
+    datasets: [{
+      label: 'Implementation Rate (%)',
+      data: [86.7, 78.4, 76.6, 74.1, 73.8, 73.2, 72.9, 72.6, 71.2, 67.5, 64.8, 64.8, 62.7, 60.0, 59.1, 58.5, 53.8, 51.5, 50.0, 47.4, 42.6, 32.6, 31.0],
+      backgroundColor: ["#70AD47", "#ED7D31", "#ED7D31", "#ED7D31", "#ED7D31", "#ED7D31", "#ED7D31", "#ED7D31", "#ED7D31", "#ED7D31", "#ED7D31", "#ED7D31", "#ED7D31", "#ED7D31", "#C00000", "#C00000", "#C00000", "#C00000", "#C00000", "#C00000", "#C00000", "#C00000", "#C00000"],
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: (ctx) => ` ${ctx.raw}%` } }
+    },
+    scales: {
+      y: {
+        min: 0, max: 100,
+        ticks: { callback: (v) => v + '%' },
+        grid: { color: '#EEF2F8' }
+      },
+      x: { grid: { display: false }, ticks: { maxRotation: 45, font: { size: 10 } } }
+    }
+  }
+});
+</script>
+</body>
+</html>
